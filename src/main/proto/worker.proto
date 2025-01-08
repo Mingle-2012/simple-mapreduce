@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package site.pdli.messaging;
+
+service WorkerService {
+  rpc Heartbeat(HeartbeatRequest) returns (google.protobuf.Empty);
+  rpc Completed(CompletedRequest) returns (google.protobuf.Empty);
+}
+
+enum WorkerStatus {
+  IDLE = 0;
+  RUNNING = 1;
+  FINISHED = 2;
+}
+
+message HeartbeatRequest {
+  string worker_id = 1;
+  string timestamp = 2;
+  WorkerStatus status = 3;
+}
+
+message CompletedRequest {
+  string worker_id = 1;
+  string task_id = 2;
+  repeated string output_files = 3;
+}
