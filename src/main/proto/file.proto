@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package site.pdli.messaging;
+
+service FileService {
+  rpc ReadFile(ReadFileRequest) returns (ReadFileResponse);
+  rpc WriteFile(WriteFileRequest) returns (WriteFileResponse);
+}
+
+message ReadFileRequest {
+  string file_path = 1;
+}
+
+message ReadFileResponse {
+  bytes content = 1;
+}
+
+message WriteFileRequest {
+  string file_path = 1;
+  bytes content = 2;
+}
+
+message WriteFileResponse {
+  bool success = 1;
+}
