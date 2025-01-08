@@ -1,0 +1,92 @@
+syntax = "proto3";
+package site.pdli.messaging;
+
+option java_multiple_files = true;
+option java_package = "site.pdli.messaging";
+option java_outer_classname = "MasterProto";
+
+// 服务定义
+service MasterService {
+  rpc RegisterWorker (RegisterWorkerRequest) returns (RegisterWorkerResponse) {}
+  rpc Heartbeat (HeartbeatRequest) returns (HeartbeatResponse) {}
+  rpc ReportTaskStatus (TaskStatusRequest) returns (TaskStatusResponse) {}
+  rpc ReportMapOutput (MapOutputRequest) returns (MapOutputResponse) {}
+}
+
+// Worker状态枚举
+enum WorkerStatus {
+  IDLE = 0;
+  RUNNING = 1;
+  FAILED = 2;
+  COMPLETED = 3;
+}
+
+// 任务状态枚举
+enum TaskStatus {
+  TASK_PENDING = 0;
+  TASK_IN_PROGRESS = 1;
+  TASK_COMPLETED = 2;
+  TASK_FAILED = 3;
+}
+
+// Worker注册请求
+message RegisterWorkerRequest {
+  string worker_id = 1;
+  string host = 2;
+  int32 port = 3;
+}
+
+message RegisterWorkerResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// 心跳请求
+message HeartbeatRequest {
+  string worker_id = 1;
+  WorkerStatus status = 2;
+  string current_task_id = 3;
+  map<string, string> metrics = 4;
+}
+
+message HeartbeatResponse {
+  bool should_continue = 1;
+  repeated TaskCommand pending_commands = 2;
+}
+
+// 任务状态报告
+message TaskStatusRequest {
+  string worker_id = 1;
+  string task_id = 2;
+  TaskStatus status = 3;
+  string error_message = 4;
+}
+
+message TaskStatusResponse {
+  bool acknowledged = 1;
+}
+
+// Map输出位置报告
+message MapOutputRequest {
+  string worker_id = 1;
+  int32 map_task_id = 2;
+  repeated MapOutputLocation locations = 3;
+}
+
+message MapOutputLocation {
+  string file_path = 1;
+  int64 offset = 2;
+  int64 length = 3;
+  int32 partition = 4;
+}
+
+message MapOutputResponse {
+  bool acknowledged = 1;
+}
+
+// 任务命令
+message TaskCommand {
+  string command_id = 1;
+  string type = 2;
+  map<string, string> parameters = 3;
+}
