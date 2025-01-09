@@ -10,6 +10,8 @@ import site.pdli.task.TaskInfo;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +28,8 @@ public class Worker extends WorkerBase {
     protected ScheduledExecutorService workerExecutor = Executors.newScheduledThreadPool(1);
 
     protected WorkerContext ctx;
+
+    private Queue<TaskInfo> taskQueue = new ConcurrentLinkedQueue<>();
 
     public Worker(String id, int port, String masterHost, int masterPort) {
         super(id, port);
@@ -85,8 +89,9 @@ public class Worker extends WorkerBase {
         }
 
         if (status.get() != WorkerStatus.IDLE.getNumber()) {
-            log.error("Received task while worker not idle - worker id: {}, status: {}", id, status);
-            return false;
+            log.warn("Received task while worker not idle - worker id: {}, status: {}", id, status);
+            taskQueue.add(taskInfo);
+            return true;
         }
 
         try (Task task = Task.createTask(taskInfo, ctx)) {
@@ -98,9 +103,18 @@ public class Worker extends WorkerBase {
                 } else {
                     status.set(WorkerStatus.FINISHED.getNumber());
                 }
+                nextTask();
             });
             task.execute();
         }
         return true;
+    }
+
+    private void nextTask() {
+        TaskInfo taskInfo = taskQueue.poll();
+        log.info("Queued task: {}", taskInfo);
+        if (taskInfo != null) {
+            onTaskArrive(id, taskInfo);
+        }
     }
 }

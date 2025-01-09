@@ -8,9 +8,9 @@ import site.pdli.worker.Worker;
 import site.pdli.worker.WorkerContext;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+//import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+//import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 @SuppressWarnings("FieldMayBeFinal")
@@ -18,14 +18,13 @@ public class LocalRunner implements Runner {
     private Master master;
     private Config config = Config.getInstance();
     private final List<Worker> workers = new ArrayList<>();
-    private Map<WorkerContext, String> workerContextToId = new HashMap<>();
+//    private Map<WorkerContext, String> workerContextToId = new HashMap<>();
 
     private Thread masterThread;
     private List<Thread> workerThreads = new ArrayList<>();
 
     private CountDownLatch masterInitLatch = new CountDownLatch(1);
-    private CountDownLatch workersInitLatch = new CountDownLatch(config.getWorkers()
-        .size());
+    private CountDownLatch workersInitLatch;
 
     protected static Logger log = LoggerFactory.getLogger(LocalRunner.class);
 
@@ -34,24 +33,20 @@ public class LocalRunner implements Runner {
             try {
                 master = new Master("master", config.getMasterPort());
 
-                int i = config.getNumReducers();
                 for (var worker : config.getWorkers()) {
-                    if (i > 0) {
-                        workerContextToId.put(worker, "reducer-" + i);
-                        master.addReducer("reducer-" + i--, worker.getHost(), worker.getPort());
-                    } else {
-                        master.addMapper("mapper-" + -(--i), worker.getHost(), worker.getPort());
-                        workerContextToId.put(worker, "mapper-" + -i);
-                    }
+                    master.addWorker(worker.getHost(), worker.getPort());
                 }
 
                 master.start();
+
+                master.splitInput();
+
+                workersInitLatch = new CountDownLatch(master.getMappers().size() + master.getReducers().size());
 
                 masterInitLatch.countDown();
 
                 workersInitLatch.await();
 
-                master.splitInput();
                 master.assignMapTask();
 
                 master.block();
@@ -65,20 +60,25 @@ public class LocalRunner implements Runner {
     }
 
     protected void startWorkers() {
-        for (int i = 0; i < config.getWorkers()
-            .size(); i++) {
-            try {
-                masterInitLatch.await();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-
-            var worker = config.getWorkers()
-                .get(i);
-            var workerId = workerContextToId.get(worker);
-            var workerThread = getWorkerThread(workerId, worker);
-            workerThreads.add(workerThread);
+//        for (int i = 0; i < config.getWorkers()
+//            .size(); i++) {
+        try {
+            masterInitLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
+//
+//            var worker = config.getWorkers()
+//                .get(i);
+//            var workerId = workerContextToId.get(worker);
+//            var workerThread = getWorkerThread(workerId, worker);
+//            workerThreads.add(workerThread);
+//        }
+//
+//        workerThreads.forEach(Thread::start);
+
+        master.getMappers().forEach((id, ctx) -> workerThreads.add(getWorkerThread(id, ctx)));
+        master.getReducers().forEach((id, ctx) -> workerThreads.add(getWorkerThread(id, ctx)));
 
         workerThreads.forEach(Thread::start);
     }

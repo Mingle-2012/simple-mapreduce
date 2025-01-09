@@ -18,7 +18,27 @@ public class Config {
     private int numReducers = 1;
 
     private int masterPort = 0;
+    @SuppressWarnings("FieldMayBeFinal")
     private List<WorkerContext> workers = new ArrayList<>();
+
+    /**
+     * in bytes
+     */
+    private long splitChunkSize = 1024 * 1024 * 64;
+
+    public enum SplitMethod {
+        BY_NUM_MAPPERS,
+        BY_CHUNK_SIZE
+    }
+    private SplitMethod splitMethod = SplitMethod.BY_CHUNK_SIZE;
+
+    public SplitMethod getSplitMethod() {
+        return splitMethod;
+    }
+
+    public void setSplitMethod(SplitMethod splitMethod) {
+        this.splitMethod = splitMethod;
+    }
 
     public List<WorkerContext> getWorkers() {
         return workers;
@@ -152,5 +172,13 @@ public class Config {
 
     public void setMasterPort(int masterPort) {
         this.masterPort = masterPort;
+    }
+
+    public long getSplitChunkSize() {
+        return splitChunkSize;
+    }
+
+    public void setSplitChunkSize(long splitChunkSize) {
+        this.splitChunkSize = splitChunkSize;
     }
 }

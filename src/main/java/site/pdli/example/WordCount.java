@@ -17,12 +17,14 @@ public class WordCount {
         config.addWorker("localhost");
         config.addWorker("localhost");
         config.addWorker("localhost");
+        config.addWorker("localhost");
         config.setUsingLocalFileSystemForLocalhost(false);
 
         config.setNumReducers(2);
+        config.setSplitChunkSize(100 * 1000);
 
-        config.setInputFile(new File("input/input.txt"));
-        config.setOutputDir(new File("out"));
+        config.setInputFile(new File("example/input.txt"));
+        config.setOutputDir(new File("example/out"));
 
         Runner runner = new LocalRunner();
 
