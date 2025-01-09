@@ -6,9 +6,12 @@ import site.pdli.Config;
 import site.pdli.utils.SSHUtil;
 import site.pdli.worker.Master;
 import site.pdli.worker.Worker;
+import site.pdli.worker.WorkerContext;
+
+import java.util.Map;
 
 @SuppressWarnings("FieldMayBeFinal")
-public class RemoteRunner implements Runner {
+public class DistributedRunner implements Runner {
     // master only
     private Master master;
 
@@ -22,9 +25,9 @@ public class RemoteRunner implements Runner {
     // both
     private Config config = Config.getInstance();
     private boolean isMaster;
-    protected static Logger log = LoggerFactory.getLogger(RemoteRunner.class);
+    protected static Logger log = LoggerFactory.getLogger(DistributedRunner.class);
 
-    public RemoteRunner(String[] args) {
+    public DistributedRunner(String[] args) {
         if (args.length == 0) {
             isMaster = true;
         } else {
@@ -55,7 +58,7 @@ public class RemoteRunner implements Runner {
             master.splitInput();
 
             startWorkers();
-            Thread.sleep(5000);
+            Thread.sleep(config.getDistributedMasterWaitTime());
 
             master.assignMapTask();
         } catch (Exception e) {
@@ -75,19 +78,12 @@ public class RemoteRunner implements Runner {
         var mappers = master.getMappers();
         var reducers = master.getReducers();
 
-        for (var entry : mappers.entrySet()) {
-            var id = entry.getKey();
-            var ctx = entry.getValue();
+        copyAndFork(mappers);
+        copyAndFork(reducers);
+    }
 
-            SSHUtil.copyToRemote(ctx.getHost(), config.getJarPath(), config.getJarPath());
-            SSHUtil.execCommandOnRemote(
-                    ctx.getHost(),
-                    "java -cp " + config.getJarPath() + " " +
-                            config.getMainClass().getName() + " " + id + " "
-                            + ctx.getPort() + " " + master.getHost() + " " + master.getPort());
-        }
-
-        for (var entry : reducers.entrySet()) {
+    private void copyAndFork(Map<String, WorkerContext> workers) {
+        for (var entry : workers.entrySet()) {
             var id = entry.getKey();
             var ctx = entry.getValue();
 
@@ -115,6 +111,8 @@ public class RemoteRunner implements Runner {
 
     @Override
     public void run() {
+        Config.getInstance().checkForRemote();
+
         try {
             if (isMaster) {
                 startMaster();

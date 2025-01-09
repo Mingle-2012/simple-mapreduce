@@ -28,7 +28,8 @@ public class ContextImpl<K, V> implements Context<K, V>, AutoCloseable {
     private final Lock lock = new ReentrantLock();
 
     private final Partitioner partitioner;
-    private final int partitions = Config.getInstance().getNumReducers();
+    private final int partitions = Config.getInstance()
+        .getNumReducers();
     private final String outputDir;
 
     private static final Logger log = LoggerFactory.getLogger(ContextImpl.class);
@@ -71,7 +72,9 @@ public class ContextImpl<K, V> implements Context<K, V>, AutoCloseable {
             }
             log.trace("Partitioned tuple ({}, {}) to partition {}", tuple.key(), tuple.value(), partition);
             try {
-                fileContents.get(partition).append(tuple.toFileString()).append("\n");
+                fileContents.get(partition)
+                    .append(tuple.toFileString())
+                    .append("\n");
             } catch (Exception e) {
                 log.error("Error writing to file", e);
                 throw new RuntimeException(e);
@@ -79,16 +82,12 @@ public class ContextImpl<K, V> implements Context<K, V>, AutoCloseable {
         }
 
         for (int i = 0; i < partitions; i++) {
-            var content = fileContents.get(i).toString();
+            var content = fileContents.get(i)
+                .toString();
             if (!content.isEmpty()) {
                 var fileName = outputDir + "/" + outputFiles.get(i);
                 log.info("Writing to file {}", fileName);
-
-                if (outputDir.equals(Config.getInstance().getOutputDir().getPath())) {
-                    FileUtil.writeLocal(fileName, content.getBytes());
-                } else {
-                    FileUtil.appendLocal(fileName, content.getBytes());
-                }
+                FileUtil.appendLocal(fileName, content.getBytes());
             }
         }
     }

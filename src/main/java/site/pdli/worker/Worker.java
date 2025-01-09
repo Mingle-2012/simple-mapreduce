@@ -2,12 +2,15 @@ package site.pdli.worker;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import site.pdli.Config;
 import site.pdli.messaging.Worker.TaskType;
 import site.pdli.messaging.Worker.WorkerStatus;
 import site.pdli.messaging.WorkerClient;
 import site.pdli.task.Task;
 import site.pdli.task.TaskInfo;
+import site.pdli.utils.FileUtil;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
@@ -61,6 +64,16 @@ public class Worker extends WorkerBase {
         super.close();
         workerExecutor.shutdown();
         workerClient.close();
+
+        var tmpDir = Config.getInstance()
+            .getTmpDir();
+        try {
+            if (tmpDir.exists()) {
+                FileUtil.del(tmpDir.getPath());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

@@ -3,6 +3,7 @@ package site.pdli.utils;
 import site.pdli.Config;
 import site.pdli.messaging.FileClient;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -106,6 +107,9 @@ public class FileUtil {
     }
 
     public static void del(String file) throws IOException {
+        if (!new File(file).exists()) {
+            return;
+        }
         try (var stream = Files.walk(Paths.get(file))) {
             stream.map(Path::toFile)
                 .sorted((o1, o2) -> -o1.compareTo(o2))

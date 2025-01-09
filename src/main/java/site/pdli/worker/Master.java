@@ -255,6 +255,14 @@ public class Master extends WorkerBase {
                 client.close();
             }
         } else if (reducers.containsKey(workerId) && !outputFiles.isEmpty()) {
+            outputFiles.forEach(f -> {
+                var data = FileUtil.readRemote(f);
+                try {
+                    FileUtil.writeLocal(FileUtil.getFileName(f), data.getBytes());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
             reducersFinishedLatch.countDown();
         }
     }

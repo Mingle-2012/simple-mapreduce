@@ -1,6 +1,9 @@
 package site.pdli;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import site.pdli.utils.NetWorkUtil;
+import site.pdli.utils.SSHUtil;
 import site.pdli.worker.WorkerContext;
 
 import java.io.File;
@@ -8,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Config {
+    private static final Logger log = LoggerFactory.getLogger(Config.class);
     private Class<? extends Mapper<?, ?, ?, ?>> mapperClass;
     private Class<? extends Reducer<?, ?, ?, ?>> reducerClass;
     private Class<?> mainClass;
@@ -37,12 +41,22 @@ public class Config {
 
     private String jarPath;
 
+    private int distributedMasterWaitTime = 2000;
+
     public Class<?> getMainClass() {
         return mainClass;
     }
 
     public void setMainClass(Class<?> mainClass) {
         this.mainClass = mainClass;
+    }
+
+    public int getDistributedMasterWaitTime() {
+        return distributedMasterWaitTime;
+    }
+
+    public void setDistributedMasterWaitTime(int distributedMasterWaitTime) {
+        this.distributedMasterWaitTime = distributedMasterWaitTime;
     }
 
     public enum SplitMethod {
@@ -70,6 +84,10 @@ public class Config {
         workers.add(new WorkerContext(host, port));
     }
 
+    /**
+     * IMPORTANT: DO NOT USE THIS METHOD FOR DISTRIBUTED COMPUTING
+     * @param host host
+     */
     public void addWorker(String host) {
         addWorker(host, 0);
     }
@@ -97,6 +115,27 @@ public class Config {
 
         if (workers.isEmpty()) {
             throw new IllegalStateException("No workers added");
+        }
+    }
+
+    public void checkForRemote() {
+        throwIfUnset(mainClass, "mainClass");
+        throwIfUnset(jarPath, "jarPath");
+        throwIfUnset(inputFile, "inputFile");
+        throwIfUnset(outputDir, "outputDir");
+        throwIfUnset(mapperClass, "mapperClass");
+        throwIfUnset(reducerClass, "reducerClass");
+
+        if (workers.isEmpty()) {
+            throw new IllegalStateException("No workers added");
+        }
+
+        for (var worker : workers) {
+            if (SSHUtil.checkHost(worker.getHost())) {
+                log.error("Host {} is not reachable", worker.getHost());
+                log.error("Please make sure the host is reachable and the SSH key is set up correctly");
+                throw new IllegalStateException("Host is not reachable");
+            }
         }
     }
 

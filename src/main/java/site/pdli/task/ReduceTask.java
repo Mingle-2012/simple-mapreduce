@@ -96,7 +96,7 @@ public class ReduceTask extends Task {
         taskInfo.setOutputFiles(context.getOutputFiles()
             .stream()
             .filter(f -> f != null && !f.isEmpty())
-            .map(f -> FileUtil.makeFile(host, port, outputDir + "/" + host + "/" + port + "/" + f))
+            .map(f -> FileUtil.makeFile(host, port, Config.getInstance().getOutputDir() + "/" + f))
             .toList());
     }
 }
