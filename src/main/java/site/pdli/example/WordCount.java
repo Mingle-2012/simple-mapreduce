@@ -18,10 +18,11 @@ public class WordCount {
         config.addWorker("localhost", 5002);
         config.addWorker("localhost", 5003);
         config.addWorker("localhost", 5004);
+        config.setUsingLocalFileSystemForLocalhost(false);
 
         config.setNumReducers(2);
 
-        config.setInputFile(new File("input.txt"));
+        config.setInputFile(new File("input/input.txt"));
         config.setOutputDir(new File("out"));
 
         Runner runner = new LocalRunner();

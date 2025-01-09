@@ -42,7 +42,6 @@ public class Worker extends WorkerBase {
         while (status.get() != WorkerStatus.FINISHED.getNumber()) ;
 
         log.info("[IMPORTANT] - Worker {} finished", id);
-        close();
     }
 
     @Override
