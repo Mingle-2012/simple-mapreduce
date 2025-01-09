@@ -10,6 +10,7 @@ import site.pdli.messaging.Worker;
 import site.pdli.utils.FileUtil;
 import site.pdli.worker.WorkerContext;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -20,6 +21,8 @@ public class MapTaskTest {
             .setMapperClass(WordCountMapper.class);
         Config.getInstance()
             .setNumReducers(2);
+        Config.getInstance()
+            .setOutputDir(new File("out"));
 
         var content1 = "haha this is content1\nanother line";
         var content2 = "haha this is content2\nanother line\nyet another line";
