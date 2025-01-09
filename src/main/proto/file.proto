@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package site.pdli.messaging;
+package site.pdli.mapreduce.messaging;
 
 service FileService {
   rpc ReadFile(ReadFileRequest) returns (ReadFileResponse);

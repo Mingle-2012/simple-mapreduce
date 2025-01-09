@@ -18,7 +18,7 @@ public class WordCountDistributed {
         config.addWorker("node2", 10000);
         config.addWorker("node3", 10000);
         config.setUsingLocalFileSystemForLocalhost(false);
-        config.setJarPath("simple-mapreduce-1.0-SNAPSHOT.jar");
+        config.setJarPath("simple-mapreduce-1.0.0.jar");
 
         config.setNumReducers(1);
         config.setSplitChunkSize(100 * 1000);

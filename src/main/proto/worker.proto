@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-package site.pdli.messaging;
+package site.pdli.mapreduce.messaging;
 
 service WorkerService {
   rpc Heartbeat(HeartbeatRequest) returns (google.protobuf.Empty);
