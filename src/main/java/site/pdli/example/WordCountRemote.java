@@ -14,20 +14,18 @@ public class WordCountRemote {
         config.setMapperClass(WordCountMapper.class);
         config.setReducerClass(WordCountReducer.class);
         config.setMainClass(WordCountRemote.class);
+        config.setMasterPort(10000);
 
-        config.addWorker("localhost");
-        config.addWorker("localhost");
-        config.addWorker("localhost");
-        config.addWorker("localhost");
-        config.addWorker("localhost");
+        config.addWorker("node2", 10000);
+        config.addWorker("node3", 10000);
         config.setUsingLocalFileSystemForLocalhost(false);
-        config.setJarPath("./simple-mapreduce-1.0-SNAPSHOT.jar");
+        config.setJarPath("/root/simple-mapreduce-1.0-SNAPSHOT.jar");
 
-        config.setNumReducers(2);
+        config.setNumReducers(1);
         config.setSplitChunkSize(100 * 1000);
 
-        config.setInputFile(new File("example/input.txt"));
-        config.setOutputDir(new File("example/out"));
+        config.setInputFile(new File("input.txt"));
+        config.setOutputDir(new File("out"));
 
         Runner runner = new RemoteRunner(args);
 

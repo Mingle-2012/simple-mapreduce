@@ -56,7 +56,7 @@ public class RemoteRunner implements Runner {
             master.splitInput();
 
             startWorkers();
-            Thread.sleep(2000);
+            Thread.sleep(10000);
 
             master.assignMapTask();
         } catch (Exception e) {
