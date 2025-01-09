@@ -14,22 +14,24 @@ public class CommandUtil {
     public record ExecResult(int code, String output) {
     }
 
-    public static int exec(String command) {
+    public static ExecResult exec(String command) {
         var processBuilder = new ProcessBuilder("bash", "-c", command);
         log.info("exec command: {}", command);
         processBuilder.redirectErrorStream(true);
         try {
             var process = processBuilder.start();
+            var result = new StringBuilder();
             try (var reader = new BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     log.info(line);
+                    result.append(line).append("\n");
                 }
             }
-            return process.waitFor();
+            return new ExecResult(process.waitFor(), result.toString());
         } catch (Exception e) {
             log.error("exec command error", e);
-            return -1;
+            return new ExecResult(-1, e.getMessage());
         }
     }
 }

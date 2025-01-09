@@ -2,12 +2,14 @@ package site.pdli.utils;
 
 import org.slf4j.Logger;
 
+import java.util.Objects;
+
 public class SSHUtil {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(SSHUtil.class);
 
     public static boolean checkHost(String host) {
         var res = CommandUtil.exec("ssh -o BatchMode=yes -o ConnectTimeout=5 " + host + " echo ok");
-        return res == 0;
+        return Objects.equals(res.output(), "ok");
     }
 
     public static void copyToRemote(String host, String localFile, String remoteFile) {
