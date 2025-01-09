@@ -21,9 +21,9 @@ public class LocalTest {
     @Before
     public void setUp() throws IOException {
         var content = """
-            This is a line of text
-            This is another line of text
-            This is yet another line of text
+            Cloud Computing Data
+            Center Center Data
+            Cloud Center Computing
             """;
         FileUtil.writeLocal("input.txt", content.getBytes());
 
