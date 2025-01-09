@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CountDownLatch;
 
 @SuppressWarnings("FieldMayBeFinal")
 public class Master extends WorkerBase {
@@ -29,7 +29,7 @@ public class Master extends WorkerBase {
     private Map<String, Integer> partsToCompletedCnt = new HashMap<>();
 
 
-    private AtomicInteger reducersFinished = new AtomicInteger(0);
+    private CountDownLatch reducersFinishedLatch;
 
     public Master(String id, int port) {
         super(id, port);
@@ -104,7 +104,11 @@ public class Master extends WorkerBase {
     }
 
     public void block() {
-        while (reducersFinished.get() < reducers.size()) ;
+        try {
+            reducersFinishedLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         log.info("[IMPORTANT] - All reducers finished.");
     }
@@ -112,6 +116,7 @@ public class Master extends WorkerBase {
     @Override
     public void start() {
         super.start();
+        reducersFinishedLatch = new CountDownLatch(reducers.size());
     }
 
     @Override
@@ -141,7 +146,7 @@ public class Master extends WorkerBase {
                 client.close();
             }
         } else if (reducers.containsKey(workerId) && !outputFiles.isEmpty()) {
-            reducersFinished.set(reducersFinished.get() + 1);
+            reducersFinishedLatch.countDown();
         }
     }
 
