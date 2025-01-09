@@ -48,12 +48,14 @@ public class MapTaskTest {
     }
 
     public void afterExecute(TaskInfo taskInfo) {
+        var files = taskInfo.getOutputFiles();
+
         byte[] part0;
         byte[] part1;
 
         try {
-            part0 = FileUtil.readLocal("tmp/part-0");
-            part1 = FileUtil.readLocal("tmp/part-1");
+            part0 = FileUtil.readLocal(FileUtil.getFileName(files.get(0)));
+            part1 = FileUtil.readLocal(FileUtil.getFileName(files.get(1)));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
