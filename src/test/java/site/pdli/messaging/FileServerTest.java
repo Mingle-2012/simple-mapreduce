@@ -46,15 +46,17 @@ public class FileServerTest {
     @Test
     public void testReadFile() throws Exception {
         Files.write(Paths.get("test.txt"), "Hello, World!".getBytes());
-        FileClient client = new FileClient("localhost", 50001);
-        var content = client.readFile("test.txt");
-        assert content.toStringUtf8().equals("Hello, World!");
+        try (FileClient client = new FileClient("localhost", 50001)) {
+            var content = client.readFile("test.txt");
+            assert content.toStringUtf8().equals("Hello, World!");
+        }
     }
 
     @Test
     public void testWriteFile() throws Exception {
-        FileClient client = new FileClient("localhost", 50001);
-        client.writeFile("test.txt", "Hello, World!".getBytes());
+        try (FileClient client = new FileClient("localhost", 50001)) {
+            client.writeFile("test.txt", "Hello, World!".getBytes());
+        }
         var content = Files.readString(Paths.get("test.txt"));
         assert content.equals("Hello, World!");
     }

@@ -6,14 +6,14 @@ import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FileClient {
+public class FileClient implements AutoCloseable {
+    private final ManagedChannel channel;
     private final FileServiceGrpc.FileServiceBlockingStub blockingStub;
 
     private final Logger log = LoggerFactory.getLogger(FileClient.class);
 
-
     public FileClient(String host, int port) {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
+        this.channel = ManagedChannelBuilder.forAddress(host, port)
             .usePlaintext()
             .build();
         this.blockingStub = FileServiceGrpc.newBlockingStub(channel);
@@ -40,5 +40,11 @@ public class FileClient {
         } else {
             log.error("Failed to write file {}", filePath);
         }
+    }
+
+    @Override
+    public void close() {
+        log.info("Closing FileClient");
+        channel.shutdown();
     }
 }

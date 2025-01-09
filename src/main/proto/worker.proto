@@ -6,12 +6,13 @@ package site.pdli.messaging;
 
 service WorkerService {
   rpc Heartbeat(HeartbeatRequest) returns (google.protobuf.Empty);
-  rpc Completed(CompletedRequest) returns (google.protobuf.Empty);
+  rpc FileWriteComplete(FileWriteCompleteRequest) returns (google.protobuf.Empty);
+  rpc SendTask(SendTaskRequest) returns (SendTaskResponse);
 }
 
 enum WorkerStatus {
   IDLE = 0;
-  RUNNING = 1;
+  BUSY = 1;
   FINISHED = 2;
 }
 
@@ -21,8 +22,25 @@ message HeartbeatRequest {
   WorkerStatus status = 3;
 }
 
-message CompletedRequest {
+message FileWriteCompleteRequest {
   string worker_id = 1;
   string task_id = 2;
   repeated string output_files = 3;
+}
+
+enum TaskType {
+  MAP = 0;
+  REDUCE_READ = 1;
+  REDUCE = 2;
+}
+
+message SendTaskRequest {
+  string worker_id = 1;
+  TaskType task_type = 2;
+  string task_id = 3;
+  repeated string input_files = 4;
+}
+
+message SendTaskResponse {
+  bool ok = 1;
 }

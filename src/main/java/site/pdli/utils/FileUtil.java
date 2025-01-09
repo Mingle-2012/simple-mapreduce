@@ -1,0 +1,109 @@
+package site.pdli.utils;
+
+import site.pdli.messaging.FileClient;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+
+public class FileUtil {
+    public static String getHostName(String file) {
+        if (!file.contains("://")) {
+            throw new IllegalArgumentException("Invalid file format");
+        }
+        return file.split("://")[0].split(":")[0];
+    }
+
+    public static int getPort(String file) {
+        if (!file.contains("://")) {
+            throw new IllegalArgumentException("Invalid file format");
+        }
+        return Integer.parseInt(file.split("://")[0].split(":")[1]);
+    }
+
+    public static String getFileName(String file) {
+        if (!file.contains("://")) {
+            throw new IllegalArgumentException("Invalid file format");
+        }
+        return file.split("://")[1];
+    }
+
+    public static String makeFile(String host, int port, String fileName) {
+        return host + ":" + port + "://" + fileName;
+    }
+
+    public static void writeLocal(String fileName, byte[] data) throws IOException {
+        ensureExists(fileName);
+        Files.write(Paths.get(fileName), data);
+    }
+
+    public static void appendLocal(String fileName, byte[] data) throws IOException {
+        ensureExists(fileName);
+        Files.write(Paths.get(fileName), data, StandardOpenOption.APPEND);
+    }
+
+    public static byte[] readLocal(String fileName) throws IOException {
+        return Files.readAllBytes(Paths.get(fileName));
+    }
+
+    public static void writeRemote(String file, byte[] data) {
+        var host = getHostName(file);
+        var port = getPort(file);
+        var fileName = getFileName(file);
+
+        if (host.equals("localhost")) {
+            try {
+                writeLocal(fileName, data);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return;
+        }
+
+        try (var client = new FileClient(host, port)) {
+            client.writeFile(fileName, data);
+        }
+    }
+
+    public static String readRemote(String file) {
+        var host = getHostName(file);
+        var port = getPort(file);
+        var fileName = getFileName(file);
+
+        if (host.equals("localhost")) {
+            try {
+                return new String(readLocal(fileName));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        try (var client = new FileClient(host, port)) {
+            var data = client.readFile(fileName);
+            return data.toString();
+        }
+    }
+
+    public static void ensureExists(String fileName) throws IOException {
+        Path path = Paths.get(fileName);
+        var parent = path.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        if (!Files.exists(path)) {
+            Files.createFile(path);
+        }
+    }
+
+    public static void del(String file) throws IOException {
+        try (var stream = Files.walk(Paths.get(file))) {
+            stream.map(Path::toFile)
+                .sorted((o1, o2) -> -o1.compareTo(o2))
+                .forEach(p -> {
+                    var ignore = p.delete();
+                });
+        }
+    }
+}
