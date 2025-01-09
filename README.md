@@ -25,7 +25,7 @@ public class WordCountMapper extends Mapper<Long, String, String, Integer> {
         }
     }
 }
-
+```
 ```java
 public class WordCountReducer extends Reducer<String, Integer, String, Integer> {
     @Override
