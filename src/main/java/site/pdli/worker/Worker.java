@@ -11,16 +11,12 @@ import site.pdli.task.TaskInfo;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.*;
 
 public class Worker extends WorkerBase {
     protected String masterHost;
     protected int masterPort;
-    protected AtomicInteger status = new AtomicInteger(WorkerStatus.IDLE.getNumber());
+    protected WorkerStatus status = WorkerStatus.IDLE;
 
     protected Logger log = LoggerFactory.getLogger(Worker.class);
 
@@ -29,7 +25,9 @@ public class Worker extends WorkerBase {
 
     protected WorkerContext ctx;
 
-    private Queue<TaskInfo> taskQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<TaskInfo> taskQueue = new ConcurrentLinkedQueue<>();
+
+    private final CountDownLatch terminateLatch = new CountDownLatch(1);
 
     public Worker(String id, int port, String masterHost, int masterPort) {
         super(id, port);
@@ -43,7 +41,11 @@ public class Worker extends WorkerBase {
     }
 
     public void block() {
-        while (status.get() != WorkerStatus.FINISHED.getNumber()) ;
+        try {
+            terminateLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         log.info("[IMPORTANT] - Worker {} finished", id);
     }
@@ -73,7 +75,7 @@ public class Worker extends WorkerBase {
 
     private void startHeartBeating() {
         log.info("Starting heartbeat for worker {}", id);
-        workerExecutor.scheduleAtFixedRate(() -> workerClient.sendHeartbeat(id, WorkerStatus.forNumber(status.get())),
+        workerExecutor.scheduleAtFixedRate(() -> workerClient.sendHeartbeat(id, status),
             0, 5, TimeUnit.SECONDS);
     }
 
@@ -88,21 +90,24 @@ public class Worker extends WorkerBase {
             return false;
         }
 
-        if (status.get() != WorkerStatus.IDLE.getNumber()) {
+        if (status != WorkerStatus.IDLE) {
             log.warn("Received task while worker not idle - worker id: {}, status: {}", id, status);
             taskQueue.add(taskInfo);
             return true;
         }
 
+        if (taskInfo.getTaskType() == TaskType.TERMINATE) {
+            log.info("Received terminate task - worker id: {}", id);
+            status = WorkerStatus.TERMINATED;
+            terminateLatch.countDown();
+            return true;
+        }
+
         try (Task task = Task.createTask(taskInfo, ctx)) {
-            status.set(WorkerStatus.BUSY.getNumber());
+            status = WorkerStatus.BUSY;
             task.setAfterExecute((info) -> {
                 sendFileWriteCompleted(info.getOutputFiles());
-                if (info.getTaskType() == TaskType.REDUCE_READ) {
-                    status.set(WorkerStatus.IDLE.getNumber());
-                } else {
-                    status.set(WorkerStatus.FINISHED.getNumber());
-                }
+                status = WorkerStatus.IDLE;
                 nextTask();
             });
             task.execute();

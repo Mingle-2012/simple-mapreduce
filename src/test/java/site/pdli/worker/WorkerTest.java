@@ -34,6 +34,7 @@ public class WorkerTest {
         System.out.println("Teardown complete");
     }
 
+
     @Test
     public void testWorker() throws InterruptedException {
         Thread.sleep(6000);

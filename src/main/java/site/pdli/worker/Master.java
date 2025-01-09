@@ -10,7 +10,10 @@ import site.pdli.task.TaskInfo;
 import site.pdli.utils.FileUtil;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 @SuppressWarnings("FieldMayBeFinal")
@@ -38,7 +41,7 @@ public class Master extends WorkerBase {
 
 
     private CountDownLatch reducersFinishedLatch;
-    
+
     private Config config = Config.getInstance();
 
     public Master(String id, int port) {
@@ -141,7 +144,7 @@ public class Master extends WorkerBase {
         int i = 0;
         List<String> currentGroupLines = new ArrayList<>();
 
-        for (var line: lines) {
+        for (var line : lines) {
             int lineSize = line.getBytes().length;
             if (currentGroupSize + lineSize > chunkSize && !currentGroupLines.isEmpty()) {
                 var inputFileForMapper = tmpDir + "/" + host + "/" + port + "/input-" + i;
@@ -197,6 +200,25 @@ public class Master extends WorkerBase {
         }
 
         log.info("[IMPORTANT] - All reducers finished.");
+        log.info("Terminating workers");
+
+        for (var entry : mappers.entrySet()) {
+            try (var client = new WorkerClient(entry.getValue()
+                .getHost(), entry.getValue()
+                .getPort())) {
+                client.sendTask(entry.getKey(),
+                    new TaskInfo("terminate-task-mapper-" + entry.getKey(), TaskType.TERMINATE, List.of()));
+            }
+        }
+
+        for (var entry : reducers.entrySet()) {
+            try (var client = new WorkerClient(entry.getValue()
+                .getHost(), entry.getValue()
+                .getPort())) {
+                client.sendTask(entry.getKey(),
+                    new TaskInfo("terminate-task-reducer-" + entry.getKey(), TaskType.TERMINATE, List.of()));
+            }
+        }
     }
 
     @Override
