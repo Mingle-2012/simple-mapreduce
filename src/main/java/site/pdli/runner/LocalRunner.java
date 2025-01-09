@@ -116,11 +116,6 @@ public class LocalRunner implements Runner {
 
     @Override
     public void waitForCompletion() {
-        try {
-            masterThread.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
         workerThreads.forEach(t -> {
             try {
                 t.join();
@@ -128,5 +123,16 @@ public class LocalRunner implements Runner {
                 throw new RuntimeException(e);
             }
         });
+
+        try {
+            masterThread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        master.close();
+        for (var worker : workers) {
+            worker.close();
+        }
     }
 }

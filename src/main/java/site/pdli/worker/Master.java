@@ -107,7 +107,6 @@ public class Master extends WorkerBase {
         while (reducersFinished.get() < reducers.size()) ;
 
         log.info("[IMPORTANT] - All reducers finished.");
-        close();
     }
 
     @Override
