@@ -33,6 +33,7 @@ public class Master extends WorkerBase {
 
     public Master(String id, int port) {
         super(id, port);
+        log.info("Master {} started at {}:{}", id, host, port);
     }
 
     public void addMapper(String id, String host, int port) {
@@ -105,7 +106,8 @@ public class Master extends WorkerBase {
     public void block() {
         while (reducersFinished.get() < reducers.size()) ;
 
-        log.info("All reducers finished.");
+        log.info("[IMPORTANT] - All reducers finished.");
+        close();
     }
 
     @Override
