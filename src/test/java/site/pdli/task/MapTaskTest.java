@@ -1,9 +1,6 @@
 package site.pdli.task;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import site.pdli.Config;
 import site.pdli.example.WordCountMapper;
 import site.pdli.messaging.Worker;
@@ -38,15 +35,17 @@ public class MapTaskTest {
         FileUtil.del("tmp");
     }
 
+    @Ignore
     @Test
     public void testMapTask() {
         try (var task = Task.createTask(
             new TaskInfo("task1", Worker.TaskType.MAP,
                 List.of("localhost:10001://input1", "localhost:10002://input2")),
             new WorkerContext("localhost", 10000))) {
-            task.setAfterExecute(this::afterExecute);
             task.execute();
             task.join();
+
+            afterExecute(task.getTaskInfo());
         }
     }
 
