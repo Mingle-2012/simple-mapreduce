@@ -44,7 +44,6 @@ public class RemoteRunner implements Runner {
         assert masterHost == null;
         assert masterPort == null;
 
-
         try {
             master = new Master("master", config.getMasterPort());
 
@@ -56,7 +55,7 @@ public class RemoteRunner implements Runner {
             master.splitInput();
 
             startWorkers();
-            Thread.sleep(10000);
+            Thread.sleep(5000);
 
             master.assignMapTask();
         } catch (Exception e) {
@@ -81,8 +80,11 @@ public class RemoteRunner implements Runner {
             var ctx = entry.getValue();
 
             SSHUtil.copyToRemote(ctx.getHost(), config.getJarPath(), config.getJarPath());
-            SSHUtil.execCommandOnRemote(ctx.getHost(), "java -cp " + config.getJarPath() + " " + config.getMainClass()
-                .getName() + " " + id + " " + ctx.getPort() + " " + master.getHost() + " " + master.getPort());
+            SSHUtil.execCommandOnRemote(
+                    ctx.getHost(),
+                    "java -cp " + config.getJarPath() + " " +
+                            config.getMainClass().getName() + " " + id + " "
+                            + ctx.getPort() + " " + master.getHost() + " " + master.getPort());
         }
 
         for (var entry : reducers.entrySet()) {
@@ -90,11 +92,13 @@ public class RemoteRunner implements Runner {
             var ctx = entry.getValue();
 
             SSHUtil.copyToRemote(ctx.getHost(), config.getJarPath(), config.getJarPath());
-            SSHUtil.execCommandOnRemote(ctx.getHost(), "java -cp " + config.getJarPath() + " " + config.getMainClass()
-                .getName() + " " + id + " " + ctx.getPort() + " " + master.getHost() + " " + master.getPort());
+            SSHUtil.execCommandOnRemote(
+                    ctx.getHost(),
+                    "java -cp " + config.getJarPath() + " " +
+                            config.getMainClass().getName() + " " + id + " "
+                            + ctx.getPort() + " " + master.getHost() + " " + master.getPort());
         }
     }
-
 
     // workers only
     private void startWorker() {
@@ -103,7 +107,6 @@ public class RemoteRunner implements Runner {
         try {
             worker = new Worker(workerId, workerPort, masterHost, masterPort);
             worker.start();
-            Thread.sleep(2000);
         } catch (Exception e) {
             log.error("Error in worker", e);
             System.exit(1);
@@ -112,21 +115,31 @@ public class RemoteRunner implements Runner {
 
     @Override
     public void run() {
-        if (isMaster) {
-            startMaster();
-        } else {
-            startWorker();
+        try {
+            if (isMaster) {
+                startMaster();
+            } else {
+                startWorker();
+            }
+        } catch (Exception e) {
+            log.error("Error in run", e);
+            System.exit(1);
         }
     }
 
     @Override
     public void waitForCompletion() {
-        if (isMaster) {
-            master.block();
-            master.close();
-        } else {
-            worker.block();
-            worker.close();
+        try {
+            if (isMaster) {
+                master.block();
+                master.close();
+            } else {
+                worker.block();
+                worker.close();
+            }
+        } catch (Exception e) {
+            log.error("Error in waitForCompletion", e);
+            System.exit(1);
         }
     }
 }

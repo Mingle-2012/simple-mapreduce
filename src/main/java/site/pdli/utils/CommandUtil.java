@@ -15,24 +15,21 @@ public class CommandUtil {
     }
 
     public static int exec(String command) {
+        var processBuilder = new ProcessBuilder("bash", "-c", command);
+        log.info("exec command: {}", command);
+        processBuilder.redirectErrorStream(true);
         try {
-            var process = Runtime.getRuntime()
-                .exec("""
-                    bash -c '%s'
-                    """.formatted(command));
-            int code = process.waitFor();
-            BufferedReader reader = new BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
-            StringBuilder output = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                output.append(line)
-                    .append("\n");
+            var process = processBuilder.start();
+            try (var reader = new BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.info(line);
+                }
             }
-            log.info("Command: {}\nOutput: {}", command, output);
-            return code;
+            return process.waitFor();
         } catch (Exception e) {
-            log.error("Error while executing command: {}", command, e);
-            throw new RuntimeException(e);
+            log.error("exec command error", e);
+            return -1;
         }
     }
 }
