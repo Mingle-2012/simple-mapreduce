@@ -64,16 +64,6 @@ public class Worker extends WorkerBase {
         super.close();
         workerExecutor.shutdown();
         workerClient.close();
-
-        var tmpDir = Config.getInstance()
-            .getTmpDir();
-        try {
-            if (tmpDir.exists()) {
-                FileUtil.del(tmpDir.getPath());
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override

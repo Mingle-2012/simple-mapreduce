@@ -7,6 +7,7 @@ import site.pdli.utils.SSHUtil;
 import site.pdli.worker.WorkerContext;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -116,19 +117,15 @@ public class Config {
         if (workers.isEmpty()) {
             throw new IllegalStateException("No workers added");
         }
+
+        if (outputDir.exists()) {
+            throw new IllegalStateException("Output directory already exists, please delete it first");
+        }
     }
 
     public void checkForRemote() {
         throwIfUnset(mainClass, "mainClass");
         throwIfUnset(jarPath, "jarPath");
-        throwIfUnset(inputFile, "inputFile");
-        throwIfUnset(outputDir, "outputDir");
-        throwIfUnset(mapperClass, "mapperClass");
-        throwIfUnset(reducerClass, "reducerClass");
-
-        if (workers.isEmpty()) {
-            throw new IllegalStateException("No workers added");
-        }
 
         for (var worker : workers) {
             if (SSHUtil.checkHost(worker.getHost())) {
@@ -137,6 +134,8 @@ public class Config {
                 throw new IllegalStateException("Host is not reachable");
             }
         }
+
+        checkForLocal();
     }
 
     public static synchronized Config getInstance() {

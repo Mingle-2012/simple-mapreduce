@@ -4,11 +4,15 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import site.pdli.Config;
 import site.pdli.messaging.FileService;
 import site.pdli.messaging.Worker;
 import site.pdli.messaging.WorkerService;
 import site.pdli.task.TaskInfo;
+import site.pdli.utils.FileUtil;
 import site.pdli.utils.NetWorkUtil;
+
+import java.io.IOException;
 
 public abstract class WorkerBase implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(WorkerBase.class);
@@ -52,6 +56,12 @@ public abstract class WorkerBase implements AutoCloseable {
     public void close() {
         serverThread.interrupt();
         server.shutdown();
+
+        try {
+            FileUtil.del(Config.getInstance().getTmpDir().getPath());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected abstract void onHeartBeatArrive(String workerId, Worker.WorkerStatus status);
