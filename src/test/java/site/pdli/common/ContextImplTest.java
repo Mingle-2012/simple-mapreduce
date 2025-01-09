@@ -7,6 +7,7 @@ import site.pdli.Config;
 import site.pdli.common.partitioner.HashcodePartitioner;
 import site.pdli.utils.FileUtil;
 
+import java.io.File;
 import java.io.IOException;
 
 public class ContextImplTest {
@@ -14,6 +15,7 @@ public class ContextImplTest {
     public void testMapperContext() throws InterruptedException, IOException {
         Config config = Config.getInstance();
         config.setNumReducers(2);
+        config.setOutputDir(new File("out"));
         ContextImpl<String, Integer> context = new ContextImpl<>(new HashcodePartitioner(), "tmp");
         context.emit("hello", 1);
         context.emit("world", 2);
@@ -35,11 +37,11 @@ public class ContextImplTest {
         var part1 = FileUtil.readLocal("tmp/part-1");
         Assert.assertEquals(
             "\"hello\"|\"1\"\n\"world\"|\"2\"\n\"hello\"|\"3\"\n\"world\"|\"4\"\n\"jklmnopq\"|\"9\"\n",
-            new String(part0)
+            part0
         );
         Assert.assertEquals(
             "\"abcdefghi\"|\"8\"\n",
-            new String(part1)
+            part1
         );
         context.close();
     }

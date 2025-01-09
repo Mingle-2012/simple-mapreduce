@@ -10,6 +10,7 @@ import java.util.List;
 public class Config {
     private Class<? extends Mapper<?, ?, ?, ?>> mapperClass;
     private Class<? extends Reducer<?, ?, ?, ?>> reducerClass;
+    private Class<?> mainClass;
     private File inputFile;
     private File outputDir;
 
@@ -25,6 +26,24 @@ public class Config {
      * in bytes
      */
     private long splitChunkSize = 1024 * 1024 * 64;
+
+    public String getJarPath() {
+        return jarPath;
+    }
+
+    public void setJarPath(String jarPath) {
+        this.jarPath = jarPath;
+    }
+
+    private String jarPath;
+
+    public Class<?> getMainClass() {
+        return mainClass;
+    }
+
+    public void setMainClass(Class<?> mainClass) {
+        this.mainClass = mainClass;
+    }
 
     public enum SplitMethod {
         BY_NUM_MAPPERS,
