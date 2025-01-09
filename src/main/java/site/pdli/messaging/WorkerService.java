@@ -30,8 +30,6 @@ public class WorkerService extends WorkerServiceGrpc.WorkerServiceImplBase {
         responseObserver.onCompleted();
 
         onHeartBeatArrive.call(request.getWorkerId(), request.getStatus());
-
-        log.info("Heartbeat received for worker {}", request.getWorkerId());
     }
 
     @Override
@@ -40,8 +38,6 @@ public class WorkerService extends WorkerServiceGrpc.WorkerServiceImplBase {
         responseObserver.onCompleted();
 
         onWorkerFileWriteComplete.call(request.getWorkerId(), request.getOutputFilesList());
-
-        log.info("FileWriteComplete received for worker {}", request.getWorkerId());
     }
 
     @Override

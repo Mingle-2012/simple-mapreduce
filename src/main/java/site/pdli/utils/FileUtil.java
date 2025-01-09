@@ -9,24 +9,27 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 public class FileUtil {
-    public static String getHostName(String file) {
+    private FileUtil() {
+    }
+
+    private static void throwIfIllegalFormat(String file) {
         if (!file.contains("://")) {
-            throw new IllegalArgumentException("Invalid file format");
+            throw new IllegalArgumentException("Invalid file format - file: " + file);
         }
+    }
+
+    public static String getHostName(String file) {
+        throwIfIllegalFormat(file);
         return file.split("://")[0].split(":")[0];
     }
 
     public static int getPort(String file) {
-        if (!file.contains("://")) {
-            throw new IllegalArgumentException("Invalid file format");
-        }
+        throwIfIllegalFormat(file);
         return Integer.parseInt(file.split("://")[0].split(":")[1]);
     }
 
     public static String getFileName(String file) {
-        if (!file.contains("://")) {
-            throw new IllegalArgumentException("Invalid file format");
-        }
+        throwIfIllegalFormat(file);
         return file.split("://")[1];
     }
 
@@ -82,7 +85,7 @@ public class FileUtil {
 
         try (var client = new FileClient(host, port)) {
             var data = client.readFile(fileName);
-            return data.toString();
+            return data.toStringUtf8();
         }
     }
 

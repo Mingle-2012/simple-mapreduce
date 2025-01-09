@@ -2,6 +2,7 @@ package site.pdli.worker;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import site.pdli.messaging.Worker.TaskType;
 import site.pdli.messaging.Worker.WorkerStatus;
 import site.pdli.messaging.WorkerClient;
 import site.pdli.task.Task;
@@ -12,11 +13,12 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Worker extends WorkerBase {
     protected String masterHost;
     protected int masterPort;
-    protected WorkerStatus status = WorkerStatus.IDLE;
+    protected AtomicInteger status = new AtomicInteger(WorkerStatus.IDLE.getNumber());
 
     protected Logger log = LoggerFactory.getLogger(Worker.class);
 
@@ -34,6 +36,12 @@ public class Worker extends WorkerBase {
         this.ctx = new WorkerContext(host, port);
     }
 
+    public void block() {
+        while (status.get() != WorkerStatus.FINISHED.getNumber()) ;
+
+        log.info("Worker {} finished", id);
+    }
+
     @Override
     public void start() {
         super.start();
@@ -49,7 +57,8 @@ public class Worker extends WorkerBase {
 
     private void startHeartBeating() {
         log.info("Starting heartbeat for worker {}", id);
-        workerExecutor.scheduleAtFixedRate(() -> workerClient.sendHeartbeat(id, status), 0, 5, TimeUnit.SECONDS);
+        workerExecutor.scheduleAtFixedRate(() -> workerClient.sendHeartbeat(id, WorkerStatus.forNumber(status.get())),
+            0, 5, TimeUnit.SECONDS);
     }
 
     public void sendFileWriteCompleted(List<String> outputFiles) {
@@ -58,16 +67,28 @@ public class Worker extends WorkerBase {
 
     @Override
     protected boolean onTaskArrive(String workerId, TaskInfo taskInfo) {
-        if (!Objects.equals(workerId, id) || status != WorkerStatus.IDLE) {
+        if (!Objects.equals(workerId, id)) {
+            log.error("Received task for another worker - receive id: {} worker id: {}", workerId, id);
             return false;
         }
-        Task task = Task.createTask(taskInfo, ctx);
-        status = WorkerStatus.BUSY;
-        task.setAfterExecute((info) -> {
-            status = WorkerStatus.FINISHED;
-            sendFileWriteCompleted(info.getOutputFiles());
-        });
-        task.execute();
+
+        if (status.get() != WorkerStatus.IDLE.getNumber()) {
+            log.error("Received task while worker not idle - worker id: {}, status: {}", id, status);
+            return false;
+        }
+
+        try (Task task = Task.createTask(taskInfo, ctx)) {
+            status.set(WorkerStatus.BUSY.getNumber());
+            task.setAfterExecute((info) -> {
+                sendFileWriteCompleted(info.getOutputFiles());
+                if (info.getTaskType() == TaskType.REDUCE_READ) {
+                    status.set(WorkerStatus.IDLE.getNumber());
+                } else {
+                    status.set(WorkerStatus.FINISHED.getNumber());
+                }
+            });
+            task.execute();
+        }
         return true;
     }
 }

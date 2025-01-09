@@ -27,7 +27,7 @@ public class WorkerClient implements AutoCloseable {
                 .setStatus(status)
                 .build();
         var ignore = blockingStub.heartbeat(request);
-        log.info("Heartbeat sent for worker {}", workerId);
+        log.trace("Heartbeat sent for worker {}", workerId);
     }
 
     public void sendFileWriteComplete(String workerId, List<String> outputFiles) {
@@ -52,7 +52,7 @@ public class WorkerClient implements AutoCloseable {
 
     @Override
     public void close() {
-        log.info("Closing WorkerClient");
+        log.trace("Closing WorkerClient");
         channel.shutdown();
     }
 }

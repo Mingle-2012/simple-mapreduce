@@ -1,6 +1,7 @@
 package site.pdli.worker;
 
 import io.grpc.Server;
+import io.grpc.ServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import site.pdli.messaging.FileService;
@@ -28,7 +29,7 @@ public abstract class WorkerBase implements AutoCloseable {
             log.error("Error getting host address", e);
         }
 
-        server = io.grpc.ServerBuilder.forPort(port)
+        server = ServerBuilder.forPort(port)
             .addService(new FileService())
             .addService(new WorkerService(this::onHeartBeatArrive, this::onWorkerFileWriteComplete, this::onTaskArrive))
             .build();
@@ -40,9 +41,10 @@ public abstract class WorkerBase implements AutoCloseable {
                 server.start();
                 server.awaitTermination();
             } catch (InterruptedException e) {
-                System.out.println("Server interrupted");
+                log.info("Server interrupted");
             } catch (Exception e) {
-                System.out.println("Error in server");
+                log.error("Error in server", e);
+                throw new RuntimeException(e);
             }
         });
         serverThread.start();

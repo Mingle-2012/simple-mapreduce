@@ -69,7 +69,7 @@ public class ContextImpl<K, V> implements Context<K, V>, AutoCloseable {
             if (outputFiles.get(partition) == null) {
                 outputFiles.set(partition, "part-" + partition);
             }
-            log.info("Partitioned tuple ({}, {}) to partition {}", tuple.key(), tuple.value(), partition);
+            log.trace("Partitioned tuple ({}, {}) to partition {}", tuple.key(), tuple.value(), partition);
             try {
                 fileContents.get(partition).append(tuple.toFileString()).append("\n");
             } catch (Exception e) {
@@ -92,7 +92,7 @@ public class ContextImpl<K, V> implements Context<K, V>, AutoCloseable {
     public void emit(K key, V value) {
         lock.lock();
         buffer.add(new Tuple<>(key, value));
-        log.info("Emitted tuple ({}, {})", key, value);
+        log.trace("Emitted tuple ({}, {})", key, value);
         lock.unlock();
     }
 

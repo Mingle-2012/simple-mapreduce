@@ -77,6 +77,8 @@ public class ReduceTask extends Task {
                         .add(value);
                 });
         }
+
+        taskInfo.setOutputFiles(new ArrayList<>());
     }
 
     private void processReduce() {
@@ -90,5 +92,11 @@ public class ReduceTask extends Task {
         }
 
         context.close();
+
+        taskInfo.setOutputFiles(context.getOutputFiles()
+            .stream()
+            .filter(f -> f != null && !f.isEmpty())
+            .map(f -> FileUtil.makeFile(host, port, outputDir + "/" + host + "/" + port + "/" + f))
+            .toList());
     }
 }

@@ -14,7 +14,20 @@ public record Tuple<K, V>(K key, V value) {
         return new Tuple<>(parts[0].substring(1), parts[1].substring(0, parts[1].length() - 1));
     }
 
+    public static Tuple<String, String> fromFileString(String str) {
+        String[] parts = str.split("\"\\|\"");
+        return new Tuple<>(parts[0].substring(1), parts[1].substring(0, parts[1].length() - 1));
+    }
+
     public String toFileString() {
         return "\"" + key.toString() + "\"" + "|" + "\"" + value.toString() + "\"";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Tuple<?, ?> tuple) {
+            return key.equals(tuple.key) && value.equals(tuple.value);
+        }
+        return false;
     }
 }

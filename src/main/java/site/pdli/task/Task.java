@@ -37,9 +37,9 @@ public abstract class Task implements AutoCloseable {
             doExecute();
             log.info("Task {} completed", taskInfo.getTaskId());
             if (afterExecute != null) {
-                log.info("After execute task {}", taskInfo.getTaskId());
+                log.trace("After execute task {}", taskInfo.getTaskId());
                 afterExecute.accept(taskInfo);
-                log.info("After execute task {} completed", taskInfo.getTaskId());
+                log.trace("After execute task {} completed", taskInfo.getTaskId());
             }
         });
 
