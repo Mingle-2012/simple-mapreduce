@@ -35,6 +35,7 @@ public class LocalTest {
         config.setOutputDir(new File("out"));
         config.setMapperClass(WordCountMapper.class);
         config.setReducerClass(WordCountReducer.class);
+        config.setSplitMethod(Config.SplitMethod.BY_NUM_MAPPERS);
     }
 
     @After
@@ -50,15 +51,15 @@ public class LocalTest {
 
         var masterHost = master.getHost();
 
-        master.addMapper("mapper-1", "localhost", 5001);
-        master.addMapper("mapper-2", "localhost", 5002);
-        master.addReducer("reducer-1", "localhost", 5003);
-        master.addReducer("reducer-2", "localhost", 5004);
+        master.addWorker("localhost", 5001);
+        master.addWorker("localhost", 5002);
+        master.addWorker("localhost", 5003);
+        master.addWorker("localhost", 5004);
 
-        Worker mapper1 = new Worker("mapper-1", 5001, masterHost, 5000);
-        Worker mapper2 = new Worker("mapper-2", 5002, masterHost, 5000);
-        Worker reducer1 = new Worker("reducer-1", 5003, masterHost, 5000);
-        Worker reducer2 = new Worker("reducer-2", 5004, masterHost, 5000);
+        Worker mapper1 = new Worker("mapper-0", 5001, masterHost, 5000);
+        Worker mapper2 = new Worker("mapper-1", 5002, masterHost, 5000);
+        Worker reducer1 = new Worker("reducer-0", 5003, masterHost, 5000);
+        Worker reducer2 = new Worker("reducer-1", 5004, masterHost, 5000);
 
         master.start();
         mapper1.start();

@@ -10,14 +10,22 @@ import site.pdli.task.TaskInfo;
 import site.pdli.utils.FileUtil;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 @SuppressWarnings("FieldMayBeFinal")
 public class Master extends WorkerBase {
     private static final Logger log = LoggerFactory.getLogger(Master.class);
+    private List<WorkerContext> workers = new ArrayList<>();
+
+    public Map<String, WorkerContext> getMappers() {
+        return mappers;
+    }
+
+    public Map<String, WorkerContext> getReducers() {
+        return reducers;
+    }
+
     private Map<String, WorkerContext> mappers = new HashMap<>();
     private Map<String, WorkerContext> reducers = new HashMap<>();
     private Map<String, TaskInfo> tasks = new HashMap<>();
@@ -29,21 +37,27 @@ public class Master extends WorkerBase {
     private Map<String, Integer> partsToCompletedCnt = new HashMap<>();
 
 
-    private AtomicInteger reducersFinished = new AtomicInteger(0);
+    private CountDownLatch reducersFinishedLatch;
+    
+    private Config config = Config.getInstance();
 
     public Master(String id, int port) {
         super(id, port);
         log.info("Master {} started at {}:{}", id, host, port);
     }
 
-    public void addMapper(String id, String host, int port) {
-        mappers.put(id, new WorkerContext(host, port));
+    private void addMapper(String id, WorkerContext ctx) {
+        mappers.put(id, ctx);
     }
 
-    public void addReducer(String id, String host, int port) {
-        reducers.put(id, new WorkerContext(host, port));
+    private void addReducer(String id, WorkerContext ctx) {
+        reducers.put(id, ctx);
         var nowParts = partsToReducerId.size();
         partsToReducerId.put(nowParts, id);
+    }
+
+    public void addWorker(String host, int port) {
+        workers.add(new WorkerContext(host, port));
     }
 
     public String getHost() {
@@ -55,14 +69,48 @@ public class Master extends WorkerBase {
     }
 
     public void splitInput() throws IOException {
-        var numMappers = mappers.size();
-        var inputFile = Config.getInstance()
+        if (config.getSplitMethod() == Config.SplitMethod.BY_CHUNK_SIZE) {
+            splitByChunkSize();
+        } else {
+            splitByNumMappers();
+        }
+
+        var numMappers = config.getNumMappers();
+        var numReducers = config.getNumReducers();
+
+        for (int i = 0; i < numMappers; i++) {
+            var mapperId = "mapper-" + i;
+            if (workers.isEmpty()) {
+                throw new RuntimeException("Not enough workers for mappers");
+            }
+            var first = workers.get(0);
+            addMapper(mapperId, first);
+            workers.remove(0);
+        }
+
+        for (int i = 0; i < numReducers; i++) {
+            var reducerId = "reducer-" + i;
+            if (workers.isEmpty()) {
+                throw new RuntimeException("Not enough workers for reducers");
+            }
+            var first = workers.get(0);
+            addReducer(reducerId, first);
+            workers.remove(0);
+        }
+    }
+
+    private void splitByNumMappers() throws IOException {
+        var numMappers = config.getNumMappers();
+        var inputFile = config
             .getInputFile();
         var lines = FileUtil.readLocal(inputFile.getPath())
             .lines()
             .toList();
 
         var linesPerMapper = lines.size() / numMappers;
+        var tmpDir = config
+            .getTmpDir()
+            .getPath();
 
         for (int i = 0; i < numMappers; i++) {
             var start = i * linesPerMapper;
@@ -71,17 +119,55 @@ public class Master extends WorkerBase {
                 end = lines.size();
             }
             var linesForMapper = lines.subList(start, end);
-            var tmpDir = Config.getInstance()
-                .getTmpDir()
-                .getPath();
             var inputFileForMapper = tmpDir + "/" + host + "/" + port + "/input-" + i;
             FileUtil.writeLocal(inputFileForMapper, String.join("\n", linesForMapper)
                 .getBytes());
         }
     }
 
+    private void splitByChunkSize() throws IOException {
+        var inputFile = config
+            .getInputFile();
+        var lines = FileUtil.readLocal(inputFile.getPath())
+            .lines()
+            .toList();
+        var chunkSize = config
+            .getSplitChunkSize();
+        var tmpDir = config
+            .getTmpDir()
+            .getPath();
+
+        int currentGroupSize = 0;
+        int i = 0;
+        List<String> currentGroupLines = new ArrayList<>();
+
+        for (var line: lines) {
+            int lineSize = line.getBytes().length;
+            if (currentGroupSize + lineSize > chunkSize && !currentGroupLines.isEmpty()) {
+                var inputFileForMapper = tmpDir + "/" + host + "/" + port + "/input-" + i;
+                FileUtil.writeLocal(inputFileForMapper, String.join("\n", currentGroupLines)
+                    .getBytes());
+
+                currentGroupSize = 0;
+                currentGroupLines.clear();
+                i++;
+            }
+
+            currentGroupSize += lineSize;
+            currentGroupLines.add(line);
+        }
+
+        if (!currentGroupLines.isEmpty()) {
+            var inputFileForMapper = tmpDir + "/" + host + "/" + port + "/input-" + i;
+            FileUtil.writeLocal(inputFileForMapper, String.join("\n", currentGroupLines)
+                .getBytes());
+        }
+
+        config.setNumMappers(i + 1);
+    }
+
     public void assignMapTask() {
-        var tmpDir = Config.getInstance()
+        var tmpDir = config
             .getTmpDir()
             .getPath();
 
@@ -104,7 +190,11 @@ public class Master extends WorkerBase {
     }
 
     public void block() {
-        while (reducersFinished.get() < reducers.size()) ;
+        try {
+            reducersFinishedLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         log.info("[IMPORTANT] - All reducers finished.");
     }
@@ -112,6 +202,8 @@ public class Master extends WorkerBase {
     @Override
     public void start() {
         super.start();
+        var numReducers = config.getNumReducers();
+        reducersFinishedLatch = new CountDownLatch(numReducers);
     }
 
     @Override
@@ -141,7 +233,7 @@ public class Master extends WorkerBase {
                 client.close();
             }
         } else if (reducers.containsKey(workerId) && !outputFiles.isEmpty()) {
-            reducersFinished.set(reducersFinished.get() + 1);
+            reducersFinishedLatch.countDown();
         }
     }
 

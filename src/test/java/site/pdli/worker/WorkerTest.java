@@ -36,6 +36,6 @@ public class WorkerTest {
 
     @Test
     public void testWorker() throws InterruptedException {
-        Thread.sleep(11000);
+        Thread.sleep(6000);
     }
 }

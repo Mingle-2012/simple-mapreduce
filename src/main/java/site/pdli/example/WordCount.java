@@ -13,17 +13,18 @@ public class WordCount {
         config.setMapperClass(WordCountMapper.class);
         config.setReducerClass(WordCountReducer.class);
 
-        config.setMasterPort(5000);
-        config.addWorker("localhost", 5001);
-        config.addWorker("localhost", 5002);
-        config.addWorker("localhost", 5003);
-        config.addWorker("localhost", 5004);
+        config.addWorker("localhost");
+        config.addWorker("localhost");
+        config.addWorker("localhost");
+        config.addWorker("localhost");
+        config.addWorker("localhost");
         config.setUsingLocalFileSystemForLocalhost(false);
 
         config.setNumReducers(2);
+        config.setSplitChunkSize(100 * 1000);
 
-        config.setInputFile(new File("input/input.txt"));
-        config.setOutputDir(new File("out"));
+        config.setInputFile(new File("example/input.txt"));
+        config.setOutputDir(new File("example/out"));
 
         Runner runner = new LocalRunner();
 

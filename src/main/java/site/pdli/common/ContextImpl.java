@@ -83,7 +83,12 @@ public class ContextImpl<K, V> implements Context<K, V>, AutoCloseable {
             if (!content.isEmpty()) {
                 var fileName = outputDir + "/" + outputFiles.get(i);
                 log.info("Writing to file {}", fileName);
-                FileUtil.appendLocal(fileName, content.getBytes());
+
+                if (outputDir.equals(Config.getInstance().getOutputDir().getPath())) {
+                    FileUtil.writeLocal(fileName, content.getBytes());
+                } else {
+                    FileUtil.appendLocal(fileName, content.getBytes());
+                }
             }
         }
     }

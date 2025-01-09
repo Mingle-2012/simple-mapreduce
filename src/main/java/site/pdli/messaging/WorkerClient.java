@@ -47,6 +47,21 @@ public class WorkerClient implements AutoCloseable {
                 .addAllInputFiles(taskInfo.getInputFiles())
                 .build();
         var response = blockingStub.sendTask(request);
+        if (!response.getOk()) {
+            log.error("Error sending task to worker {}", workerId);
+            int retry = 5;
+            int maxDelay = 2000;
+            while (!response.getOk() && retry > 0) {
+                try {
+                    Thread.sleep(maxDelay / 5);
+                } catch (InterruptedException e) {
+                    log.error("Error sleeping", e);
+                }
+                log.warn("Retrying task for worker {}, tries remain: {}", workerId, retry);
+                response = blockingStub.sendTask(request);
+                retry--;
+            }
+        }
         log.info("Task sent for worker {}, ok: {}", workerId, response.getOk());
     }
 
