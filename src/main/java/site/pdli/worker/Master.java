@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@SuppressWarnings("FieldMayBeFinal")
 public class Master extends WorkerBase {
     private static final Logger log = LoggerFactory.getLogger(Master.class);
     private Map<String, WorkerContext> mappers = new HashMap<>();
@@ -101,7 +102,7 @@ public class Master extends WorkerBase {
     }
 
     public void block() {
-        while (reducersFinished.get() < reducers.size());
+        while (reducersFinished.get() < reducers.size()) ;
 
         log.info("All reducers finished.");
     }
@@ -120,7 +121,9 @@ public class Master extends WorkerBase {
                 var taskId = "part-" + part + "-" + outputFile + "-reducer-read";
                 var taskInfo = new TaskInfo(taskId, TaskType.REDUCE_READ, List.of(outputFile));
                 var reducerId = partsToReducerId.get(Integer.parseInt(part));
-                var client = new WorkerClient(reducers.get(reducerId).getHost(), reducers.get(reducerId).getPort());
+                var client = new WorkerClient(reducers.get(reducerId)
+                    .getHost(), reducers.get(reducerId)
+                    .getPort());
 
                 client.sendTask(reducerId, taskInfo);
 
