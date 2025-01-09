@@ -8,8 +8,7 @@ import site.pdli.messaging.FileService;
 import site.pdli.messaging.Worker;
 import site.pdli.messaging.WorkerService;
 import site.pdli.task.TaskInfo;
-
-import java.net.InetAddress;
+import site.pdli.utils.NetWorkUtil;
 
 public abstract class WorkerBase implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(WorkerBase.class);
@@ -22,12 +21,7 @@ public abstract class WorkerBase implements AutoCloseable {
     protected WorkerBase(String id, int port) {
         this.id = id;
         this.port = port;
-
-        try {
-            this.host = InetAddress.getLocalHost().getHostAddress();
-        } catch (Exception e) {
-            log.error("Error getting host address", e);
-        }
+        this.host = NetWorkUtil.getLocalhost();
 
         server = ServerBuilder.forPort(port)
             .addService(new FileService())
@@ -60,18 +54,9 @@ public abstract class WorkerBase implements AutoCloseable {
         server.shutdown();
     }
 
-    @SuppressWarnings("unused")
-    protected void onHeartBeatArrive(String workerId, Worker.WorkerStatus status) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
+    protected abstract void onHeartBeatArrive(String workerId, Worker.WorkerStatus status);
 
-    @SuppressWarnings("unused")
-    protected void onWorkerFileWriteComplete(String workerId, java.util.List<String> outputFiles) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
+    protected abstract void onWorkerFileWriteComplete(String workerId, java.util.List<String> outputFiles);
 
-    @SuppressWarnings("unused")
-    protected boolean onTaskArrive(String workerId, TaskInfo taskInfo) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
+    protected abstract boolean onTaskArrive(String workerId, TaskInfo taskInfo);
 }

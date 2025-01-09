@@ -1,6 +1,7 @@
 package site.pdli;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import site.pdli.common.Tuple;
@@ -96,7 +97,7 @@ public class LocalTest {
             .getOutputDir();
         var files = outDir.listFiles();
 
-        assert files != null;
+        Assert.assertNotNull(files);
 
         Map<String, Integer> map1 = new HashMap<>();
         Map<String, Integer> map2 = new HashMap<>();
@@ -122,6 +123,11 @@ public class LocalTest {
                 map2.put(w, map2.get(w) + 1);
             });
 
-        assert map1.equals(map2);
+        Assert.assertEquals(map2, map1);
+    }
+
+    @Test public void testLocalNetworking() throws IOException, InterruptedException {
+        Config.getInstance().setUsingLocalFileSystemForLocalhost(false);
+        testLocal();
     }
 }

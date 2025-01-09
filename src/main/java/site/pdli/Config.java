@@ -12,6 +12,16 @@ public class Config {
     private int numMappers;
     private int numReducers;
 
+    public boolean isUsingLocalFileSystemForLocalhost() {
+        return usingLocalFileSystemForLocalhost;
+    }
+
+    public void setUsingLocalFileSystemForLocalhost(boolean usingLocalFileSystemForLocalhost) {
+        this.usingLocalFileSystemForLocalhost = usingLocalFileSystemForLocalhost;
+    }
+
+    private boolean usingLocalFileSystemForLocalhost = true;
+
     private static Config instance;
 
     private Config() {

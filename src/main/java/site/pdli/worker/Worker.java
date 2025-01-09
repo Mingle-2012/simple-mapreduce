@@ -55,6 +55,16 @@ public class Worker extends WorkerBase {
         workerClient.close();
     }
 
+    @Override
+    protected void onHeartBeatArrive(String workerId, WorkerStatus status) {
+        throw new UnsupportedOperationException("Worker should not receive heartbeat");
+    }
+
+    @Override
+    protected void onWorkerFileWriteComplete(String workerId, List<String> outputFiles) {
+        throw new UnsupportedOperationException("Worker should not receive file write complete");
+    }
+
     private void startHeartBeating() {
         log.info("Starting heartbeat for worker {}", id);
         workerExecutor.scheduleAtFixedRate(() -> workerClient.sendHeartbeat(id, WorkerStatus.forNumber(status.get())),

@@ -1,5 +1,6 @@
 package site.pdli.utils;
 
+import site.pdli.Config;
 import site.pdli.messaging.FileClient;
 
 import java.io.IOException;
@@ -10,6 +11,10 @@ import java.nio.file.StandardOpenOption;
 
 public class FileUtil {
     private FileUtil() {
+    }
+
+    private static boolean canForwardToLocal(String host) {
+        return NetWorkUtil.isLocalhost(host) && Config.getInstance().isUsingLocalFileSystemForLocalhost();
     }
 
     private static void throwIfIllegalFormat(String file) {
@@ -56,7 +61,7 @@ public class FileUtil {
         var port = getPort(file);
         var fileName = getFileName(file);
 
-        if (host.equals("localhost")) {
+        if (canForwardToLocal(host)) {
             try {
                 writeLocal(fileName, data);
             } catch (IOException e) {
@@ -75,7 +80,7 @@ public class FileUtil {
         var port = getPort(file);
         var fileName = getFileName(file);
 
-        if (host.equals("localhost")) {
+        if (canForwardToLocal(host)) {
             try {
                 return readLocal(fileName);
             } catch (IOException e) {

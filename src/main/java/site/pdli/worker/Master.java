@@ -148,4 +148,9 @@ public class Master extends WorkerBase {
     protected void onHeartBeatArrive(String workerId, WorkerStatus status) {
         log.trace("Heartbeat received from worker {} with status {}", workerId, status);
     }
+
+    @Override
+    protected boolean onTaskArrive(String workerId, TaskInfo taskInfo) {
+        throw new UnsupportedOperationException("Master does not receive tasks");
+    }
 }
