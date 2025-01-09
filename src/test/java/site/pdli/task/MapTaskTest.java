@@ -50,8 +50,8 @@ public class MapTaskTest {
     public void afterExecute(TaskInfo taskInfo) {
         var files = taskInfo.getOutputFiles();
 
-        byte[] part0;
-        byte[] part1;
+        String part0;
+        String part1;
 
         try {
             part0 = FileUtil.readLocal(FileUtil.getFileName(files.get(0)));
@@ -72,14 +72,14 @@ public class MapTaskTest {
             "line"|"1"
             "yet"|"1"
             "line"|"1"
-            """, new String(part0));
+            """, part0);
 
         Assert.assertEquals("""
             "another"|"1"
             "content2"|"1"
             "another"|"1"
             "another"|"1"
-            """, new String(part1));
+            """, part1);
 
     }
 }

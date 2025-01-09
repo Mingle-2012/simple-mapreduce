@@ -47,8 +47,8 @@ public class FileUtil {
         Files.write(Paths.get(fileName), data, StandardOpenOption.APPEND);
     }
 
-    public static byte[] readLocal(String fileName) throws IOException {
-        return Files.readAllBytes(Paths.get(fileName));
+    public static String readLocal(String fileName) throws IOException {
+        return new String(Files.readAllBytes(Paths.get(fileName)));
     }
 
     public static void writeRemote(String file, byte[] data) {
@@ -77,7 +77,7 @@ public class FileUtil {
 
         if (host.equals("localhost")) {
             try {
-                return new String(readLocal(fileName));
+                return readLocal(fileName);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

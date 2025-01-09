@@ -57,7 +57,8 @@ public class Master extends WorkerBase {
         var numMappers = mappers.size();
         var inputFile = Config.getInstance()
             .getInputFile();
-        var lines = new String(FileUtil.readLocal(inputFile.getPath())).lines()
+        var lines = FileUtil.readLocal(inputFile.getPath())
+            .lines()
             .toList();
 
         var linesPerMapper = lines.size() / numMappers;

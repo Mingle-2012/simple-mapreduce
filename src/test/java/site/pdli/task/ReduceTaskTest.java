@@ -86,8 +86,8 @@ public class ReduceTaskTest {
             reduceTask3.join();
         }
 
-        byte[] part0;
-        byte[] part1;
+        String part0;
+        String part1;
 
         try {
             part0 = FileUtil.readLocal("out/part-0");
@@ -103,12 +103,12 @@ public class ReduceTaskTest {
             "this"|"2"
             "yet"|"1"
             "is"|"2"
-            """, new String(part0));
+            """, part0);
 
         Assert.assertEquals("""
             "content2"|"1"
             "another"|"3"
-            """, new String(part1));
+            """, part1);
     }
 
     @Test
@@ -157,8 +157,8 @@ public class ReduceTaskTest {
             reduceTask22.join();
         }
 
-        byte[] part0;
-        byte[] part1;
+        String part0;
+        String part1;
 
         try {
             part0 = FileUtil.readLocal("out/part-0");
@@ -174,11 +174,11 @@ public class ReduceTaskTest {
             "this"|"2"
             "yet"|"1"
             "is"|"2"
-            """, new String(part0));
+            """, part0);
 
         Assert.assertEquals("""
             "content2"|"1"
             "another"|"3"
-            """, new String(part1));
+            """, part1);
     }
 }

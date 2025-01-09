@@ -105,7 +105,8 @@ public class LocalTest {
             .map(File::getPath)
             .forEach(p -> {
                 try {
-                    new String(FileUtil.readLocal(p)).lines()
+                    FileUtil.readLocal(p)
+                        .lines()
                         .map(Tuple::fromFileString)
                         .forEach(t -> map1.put(t.key(), Integer.parseInt(t.value())));
                 } catch (Exception e) {
@@ -113,7 +114,8 @@ public class LocalTest {
                 }
             });
 
-        new String(FileUtil.readLocal("input.txt")).lines()
+        FileUtil.readLocal("input.txt")
+            .lines()
             .flatMap(s -> Arrays.stream(s.split(" ")))
             .forEach(w -> {
                 map2.putIfAbsent(w, 0);
