@@ -1,6 +1,8 @@
 package site.pdli.utils;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.UnknownHostException;
 
 public class NetWorkUtil {
@@ -14,5 +16,13 @@ public class NetWorkUtil {
 
     public static boolean isLocalhost(String host) {
         return "localhost".equals(host) || getLocalhost().equals(host);
+    }
+
+    public static int getRandomIdlePort() {
+        try(var serverSocket = new ServerSocket(0)) {
+            return serverSocket.getLocalPort();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

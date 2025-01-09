@@ -29,7 +29,7 @@ public abstract class WorkerBase implements AutoCloseable {
             .build();
     }
 
-    public void startWorkers() {
+    public void startServers() {
         serverThread = new Thread(() -> {
             try {
                 server.start();
@@ -45,7 +45,7 @@ public abstract class WorkerBase implements AutoCloseable {
     }
 
     public void start() {
-        startWorkers();
+        startServers();
     }
 
     @Override

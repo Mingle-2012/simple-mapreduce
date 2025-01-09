@@ -34,12 +34,15 @@ public class Worker extends WorkerBase {
         this.workerClient = new WorkerClient(masterHost, masterPort);
 
         this.ctx = new WorkerContext(host, port);
+
+        log.info("Worker {} started at {}:{}", id, host, port);
     }
 
     public void block() {
         while (status.get() != WorkerStatus.FINISHED.getNumber()) ;
 
-        log.info("Worker {} finished", id);
+        log.info("[IMPORTANT] - Worker {} finished", id);
+        close();
     }
 
     @Override

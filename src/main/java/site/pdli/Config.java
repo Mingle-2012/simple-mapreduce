@@ -1,6 +1,11 @@
 package site.pdli;
 
+import site.pdli.utils.NetWorkUtil;
+import site.pdli.worker.WorkerContext;
+
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Config {
     private Class<? extends Mapper<?, ?, ?, ?>> mapperClass;
@@ -10,7 +15,25 @@ public class Config {
 
     private File tmpDir = new File("tmp");
     private int numMappers;
-    private int numReducers;
+    private int numReducers = 1;
+
+    private int masterPort = 0;
+    private List<WorkerContext> workers = new ArrayList<>();
+
+    public List<WorkerContext> getWorkers() {
+        return workers;
+    }
+
+    public void addWorker(String host, int port) {
+        if (port == 0) {
+            port = NetWorkUtil.getRandomIdlePort();
+        }
+        workers.add(new WorkerContext(host, port));
+    }
+
+    public void addWorker(String host) {
+        addWorker(host, 0);
+    }
 
     public boolean isUsingLocalFileSystemForLocalhost() {
         return usingLocalFileSystemForLocalhost;
@@ -25,6 +48,17 @@ public class Config {
     private static Config instance;
 
     private Config() {
+    }
+
+    public void checkForLocal() {
+        throwIfUnset(inputFile, "inputFile");
+        throwIfUnset(outputDir, "outputDir");
+        throwIfUnset(mapperClass, "mapperClass");
+        throwIfUnset(reducerClass, "reducerClass");
+
+        if (workers.isEmpty()) {
+            throw new IllegalStateException("No workers added");
+        }
     }
 
     public static synchronized Config getInstance() {
@@ -107,5 +141,16 @@ public class Config {
                 throw new IllegalStateException(name + " is not set");
             }
         }
+    }
+
+    public int getMasterPort() {
+        if (masterPort == 0) {
+            masterPort = NetWorkUtil.getRandomIdlePort();
+        }
+        return masterPort;
+    }
+
+    public void setMasterPort(int masterPort) {
+        this.masterPort = masterPort;
     }
 }
