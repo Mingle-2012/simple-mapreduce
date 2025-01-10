@@ -2,20 +2,20 @@ package site.pdli.example;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import site.pdli.Config;
-import site.pdli.runner.LocalRunner;
-import site.pdli.runner.Runner;
-import site.pdli.utils.FileUtil;
+import site.pdli.mapreduce.Config;
+import site.pdli.mapreduce.example.WordCountMapper;
+import site.pdli.mapreduce.example.WordCountReducer;
+import site.pdli.mapreduce.runner.LocalRunner;
+import site.pdli.mapreduce.runner.Runner;
+import site.pdli.mapreduce.utils.FileUtil;
 import site.pdli.utils.TimeUtil;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class WordCountExp {
 
-    private static final Logger log = LoggerFactory.getLogger(WordCount.class);
+    private static final Logger log = LoggerFactory.getLogger(WordCountExp.class);
 
     private static void remake() throws IOException {
         FileUtil.del("tmp");
